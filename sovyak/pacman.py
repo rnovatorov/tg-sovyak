@@ -1,0 +1,38 @@
+import re
+
+import asks
+import bs4
+import more_itertools as mit
+
+from . import models
+
+
+DB_URL = "https://db.chgk.info/tour"
+THEME_SIZE = 5
+RE_INFO = re.compile(r"[\w\-,]+")
+
+
+async def download(name):
+    pack = models.Pack(name=name)
+
+    url = f"{DB_URL}/{name}/print"
+    response = await asks.get(url)
+    soup = bs4.BeautifulSoup(response.text, "lxml")
+
+    for div in soup.find_all("div", style="margin-top:20px;"):
+        info = " ".join(RE_INFO.findall(div.contents[1]))
+        theme = models.Theme(info=info)
+
+        ps = div.find_all("p")
+        qa = mit.take(THEME_SIZE, mit.chunked(ps, 2))
+
+        for i, (q, a) in enumerate(qa, start=1):
+            question = models.Question(index=i, text=q.text, answer=a.text)
+            theme.questions.append(question)
+
+        pack.themes.append(theme)
+
+    if not pack.themes:
+        raise ValueError("Themes not found")
+
+    return pack
