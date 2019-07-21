@@ -1,3 +1,6 @@
+import re
+import contextlib
+
 import attr
 import trio
 
@@ -7,30 +10,44 @@ from . import game as _game
 @attr.s
 class NewGameHandler:
 
+    RE_COMMAND = re.compile(r"go")
+
     bot = attr.ib()
-    games = attr.ib(factory=dict)
-    command = attr.ib(default="/go")
+    chats = attr.ib(factory=set)
 
     async def __call__(self):
         async with trio.open_nursery() as nursery:
-            async with self.bot.sub(self.game_request) as updates:
-                async for update in updates:
-                    await nursery.start(self.new_game, update["message"]["chat"]["id"])
+            async with self.bot.sub(self.game_request) as us:
+                async for u in us:
+                    await nursery.start(self.new_game, u["message"]["chat"]["id"])
 
-    async def new_game(self, chat_id, task_status=trio.TASK_STATUS_IGNORED):
-        game = _game.Game(bot=self.bot, chat_id=chat_id)
-        self.games[chat_id] = game
-        task_status.started()
+    async def new_game(self, chat, task_status=trio.TASK_STATUS_IGNORED):
+        with self.chat_context(chat):
+            task_status.started()
+            players = await self.get_chat_members(chat)
+            pack = await self.choose_pack()
+            game = _game.Game(bot=self.bot, players=players, pack=pack)
+            await game.start()
+
+    @contextlib.contextmanager
+    def chat_context(self, chat):
+        self.chats.add(chat)
         try:
-            await game()
+            yield
         finally:
-            del self.games[chat_id]
+            del self.chats[chat]
 
-    def game_request(self, update):
+    async def get_chat_members(self, chat):
+        raise NotImplementedError
+
+    async def choose_pack(self):
+        raise NotImplementedError
+
+    def game_request(self, u):
         return (
-            "message" in update
-            and update["message"]["text"].startswith(self.command)
-            and update["message"]["chat"]["id"] not in self.games
+            "message" in u
+            and self.RE_COMMAND.match(u["message"]["text"]) is not None
+            and u["message"]["chat"]["id"] not in self.chats
         )
 
 
