@@ -1,100 +1,108 @@
+import re
 import collections
 
 import attr
 import trio
 
+from . import utils
+
 
 @attr.s
 class Base:
 
-    bot = attr.ib()
-    players = attr.ib()
+    _bot = attr.ib()
+    _players = attr.ib()
 
-    async def wait(self) -> str:
-        return await self.bot.wait(self._new_message)
+    async def _wait(self) -> str:
+        return await self._bot.wait(self._new_message)
 
-    async def sub(self) -> str:
-        return self.bot.sub(self._new_message)
+    async def _sub(self) -> str:
+        return self._bot.sub(self._new_message)
 
-    def _new_message(self, update):
-        return "message" in update and update["message"]["from"]["id"] in self.players
+    def _new_message(self, u):
+        return "message" in u and u["message"]["from"]["id"] in self._players
 
-    async def send(self, player: str, text: str):
-        await self.bot.api.send_message(json={"chat_id": player, "text": text})
+    async def _send(self, player: str, text: str):
+        await self._bot.api.send_message(json={"chat_id": player, "text": text})
 
-    async def broadcast(self, text: str):
+    async def _broadcast(self, text: str):
         async with trio.open_nursery() as nursery:
-            for player in self.players:
-                nursery.start_soon(self.send, player, text)
+            for player in self._players:
+                nursery.start_soon(self._send, player, text)
 
 
 @attr.s
 class Game(Base):
 
+    RE_POSITIVE_REVIEW = re.compile(r"\+")
+    RE_PASS = re.compile(r"pass")
+
     pack = attr.ib()
+
     score = attr.ib(factory=collections.Counter)
     round_duration = attr.ib(default=10)
-
     reviewers = attr.ib(factory=dict)
     workers = attr.ib(factory=set)
     queue = attr.ib(factory=list)
 
-    async def __call__(self):
+    async def start(self):
+        await self._broadcast(self.pack.name)
+
         for theme in self.pack.themes:
             for points, question in enumerate(theme.questions):
                 await self.round(question, points)
 
-    def get_sender(self, update):
-        return update["message"]["from"]["id"]
+        (winner, score), = self.score.most_common(1)
+        await self._broadcast(f"{winner}: {score}")
 
-    def get_text(self, update):
-        return update["message"]["text"]
+    __call__ = start
 
-    def is_review(self, update):
-        return self.get_sender(update) in self.reviewers
-
-    def review_is_positive(self, update):
-        return "+" in self.get_text(update)
-
-    def is_pass(self, update):
-        return "pass" in self.get_text(update)
+    async def timer(self, task_status=trio.TASK_STATUS_IGNORED):
+        timeout = trio.Event()
+        task_status.started(timeout)
+        await trio.sleep(self.round_duration)
+        timeout.set()
 
     async def round(self, question, points):
-        await self.broadcast(question.text)
+        # Ask question
+        await self._broadcast(question.text)
 
-        timeout = trio.Event()
+        # Start handling updates
+        async with trio.open_nursery() as nursery, self._sub() as us:
+            # Start timer
+            timeout = await nursery.start(self.timer)
 
-        async def timer():
-            await trio.sleep(self.round_duration)
-            timeout.set()
+            # Process updates
+            while not timeout.is_set() or self.reviewers or self.queue:
+                # Get next update
+                u = await utils.aiter(us)
+                sender, text = u["message"]["from"]["id"], u["message"]["text"]
 
-        async with trio.open_nursery() as nursery, self.sub() as updates:
-            nursery.start_soon(timer)
+                # Handle review
+                if sender in self.reviewers:
+                    reviewed = self.reviewers.pop(sender)
+                    positive = self.RE_POSITIVE_REVIEW.match(text) is not None
+                    delta = points if positive else -points
+                    self.score[reviewed] += delta
+                    self.workers.update({sender, reviewed})
 
-            async for update in updates:
-                while not timeout.is_set() or self.reviewers or self.queue:
-                    if self.is_review(update):
-                        reviewer = self.get_sender(update)
-                        reviewed = self.reviewers.pop(reviewer)
-                        delta = points if self.review_is_positive(update) else -points
-                        self.score[reviewed] += delta
-                        self.workers.update({reviewer, reviewed})
+                # Handle pass
+                elif self.RE_PASS.match(text) is not None:
+                    self.workers.add(sender)
 
-                    elif self.is_pass(update):
-                        worker = self.get_sender(update)
-                        self.workers.add(worker)
+                # Handle answer
+                elif not timeout.is_set():
+                    self.queue.append((sender, text))
 
-                    elif not timeout.is_set():
-                        self.queue.append(update)
+                # Process queue
+                if self.queue and self.workers:
+                    reviewed, text = self.queue.pop()
+                    reviewer = self.workers.pop()
+                    self.reviewers[reviewer] = reviewed
+                    await self._send(reviewer, f"{question.answer} {text}")
 
-                    if self.queue and self.workers:
-                        update = self.queue.pop()
-                        reviewer = self.workers.pop()
-                        reviewed = self.get_sender(update)
-                        self.reviewers[reviewer] = reviewed
-                        await self.send(
-                            reviewer, f"{question.answer} {self.get_text(update)}"
-                        )
+        # Reveal answer
+        await self._broadcast(question.answer)
 
-        await self.broadcast(question.answer)
-        await self.broadcast(str(self.score))
+        # Show score
+        await self._broadcast(str(self.score))
