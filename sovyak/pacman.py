@@ -26,8 +26,8 @@ async def download(name):
         ps = div.find_all("p")
         qa = mit.take(THEME_SIZE, mit.chunked(ps, 2))
 
-        for i, (q, a) in enumerate(qa, start=1):
-            question = models.Question(index=i, text=q.text, answer=a.text)
+        for q, a in qa:
+            question = models.Question(text=q.text, answer=a.text)
             theme.questions.append(question)
 
         pack.themes.append(theme)
