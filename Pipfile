@@ -3,13 +3,20 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[dev-packages]
-
 [packages]
 triogram = "*"
 beautifulsoup4 = "*"
 more-itertools = "*"
 lxml = "*"
 
+[dev-packages]
+black = "*"
+pytest = "*"
+pytest-trio = "*"
+pytest-cov = "*"
+
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

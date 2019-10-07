@@ -9,32 +9,33 @@ from . import config, handlers
 async def run():
     bot = triogram.make_bot(config.TOKEN)
 
-    configure_logging()
+    configure_triogram_logger()
+    configure_sovyak_logger()
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(bot)
         handlers.start_all(nursery, bot)
 
 
-def configure_logging():
-    # Triogram
+def configure_triogram_logger(level=logging.DEBUG):
     logger = logging.getLogger("triogram")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
 
     handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(level)
 
     formatter = logging.Formatter("%(asctime)s %(name)s %(request_id)s %(message)s")
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)
 
-    # Sovyak
+
+def configure_sovyak_logger(level=logging.DEBUG):
     logger = logging.getLogger("sovyak")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(level)
 
     handler = logging.StreamHandler()
-    handler.setLevel(logging.INFO)
+    handler.setLevel(level)
 
     formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s")
     handler.setFormatter(formatter)

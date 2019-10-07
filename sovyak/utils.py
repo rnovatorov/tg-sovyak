@@ -1,2 +1,2 @@
-async def aiter(aiterable):
-    return await aiterable.__aiter__()
+async def anext(aiterator):
+    return await aiterator.__anext__()
