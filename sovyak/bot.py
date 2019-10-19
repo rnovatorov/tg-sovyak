@@ -6,7 +6,7 @@ import triogram
 from . import config, handlers
 
 
-async def run():
+async def main():
     bot = triogram.make_bot(config.TOKEN)
 
     configure_triogram_logger()

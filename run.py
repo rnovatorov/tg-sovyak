@@ -4,4 +4,4 @@ from sovyak import bot
 
 
 if __name__ == "__main__":
-    trio.run(bot.run)
+    trio.run(bot.main)
