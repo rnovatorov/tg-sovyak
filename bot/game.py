@@ -11,7 +11,7 @@ class Game:
 
     RE_POSITIVE_REVIEW = re.compile(r"\+")
     RE_NEGATIVE_REVIEW = re.compile(r"-")
-    RE_PASS = re.compile(r"pass")
+    RE_PASS = re.compile(r"-")
 
     bot = attr.ib()
     players = attr.ib()
