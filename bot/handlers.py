@@ -4,7 +4,7 @@ import contextlib
 import attr
 import trio
 
-from . import game as _game
+from . import game
 
 
 @attr.s
@@ -26,8 +26,8 @@ class NewGameHandler:
             task_status.started()
             players = await self.get_chat_members(chat)
             pack = await self.choose_pack()
-            game = _game.Game(bot=self.bot, players=players, pack=pack)
-            await game.start()
+            g = game.Game(bot=self.bot, players=players, pack=pack)
+            await g.start()
 
     @contextlib.contextmanager
     def chat_context(self, chat):
