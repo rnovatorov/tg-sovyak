@@ -1,6 +1,6 @@
-import re
-import logging
 import collections
+import logging
+import re
 
 import attr
 import trio
@@ -17,10 +17,9 @@ class Game:
     players = attr.ib()
     pack = attr.ib()
 
-    logger = attr.ib(factory=lambda: logging.getLogger(__name__))
-
-    score = attr.ib(factory=collections.Counter)
     round_duration = attr.ib(default=10)
+    score = attr.ib(factory=collections.Counter)
+    logger = attr.ib(factory=lambda: logging.getLogger(__name__))
 
     async def start(self):
         self.logger.info("started")
