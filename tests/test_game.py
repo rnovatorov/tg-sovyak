@@ -1,10 +1,8 @@
-import trio
 import attr
-
+import trio
 from triogram import dispatcher as _dispatcher
 
-from sovyak import game as _game, models
-from sovyak.bot import configure_sovyak_logger
+from bot import logs, game as _game, models
 
 
 @attr.s
@@ -36,7 +34,7 @@ def message_from(id_, text):
 
 
 async def test_sanity():
-    configure_sovyak_logger()
+    logs.configure_bot("DEBUG")
     bot = Bot()
     players = {"Alice", "Bob"}
     adapter = _game.Adapter(bot, players)

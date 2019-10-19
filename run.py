@@ -1,7 +1,7 @@
 import trio
 
-from sovyak import bot
-
+from bot import factory, config
 
 if __name__ == "__main__":
-    trio.run(bot.main)
+    bot = factory.make_bot(config)
+    trio.run(bot)

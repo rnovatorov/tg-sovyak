@@ -20,4 +20,4 @@ black/check:
 
 .PHONY: test
 test:
-	pipenv run pytest --cov sovyak --verbose tests
+	pipenv run pytest --cov bot --verbose tests

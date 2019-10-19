@@ -1,23 +1,7 @@
 import logging
 
-import trio
-import triogram
 
-from . import config, handlers
-
-
-async def main():
-    bot = triogram.make_bot(config.TOKEN)
-
-    configure_triogram_logger()
-    configure_sovyak_logger()
-
-    async with trio.open_nursery() as nursery:
-        nursery.start_soon(bot)
-        handlers.start_all(nursery, bot)
-
-
-def configure_triogram_logger(level=logging.DEBUG):
+def configure_triogram(level):
     logger = logging.getLogger("triogram")
     logger.setLevel(level)
 
@@ -30,8 +14,8 @@ def configure_triogram_logger(level=logging.DEBUG):
     logger.addHandler(handler)
 
 
-def configure_sovyak_logger(level=logging.DEBUG):
-    logger = logging.getLogger("sovyak")
+def configure_bot(level):
+    logger = logging.getLogger("bot")
     logger.setLevel(level)
 
     handler = logging.StreamHandler()

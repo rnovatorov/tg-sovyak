@@ -1,0 +1,7 @@
+import os
+
+
+TOKEN = os.getenv("TOKEN", "")
+
+TRIOGRAM_LOGGING_LEVEL = os.getenv("TRIOGRAM_LOGGING_LEVEL", "INFO")
+BOT_LOGGING_LEVEL = os.getenv("BOT_LOGGING_LEVEL", "INFO")
