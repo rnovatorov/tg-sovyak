@@ -49,7 +49,3 @@ class NewGameHandler:
             and self.RE_COMMAND.match(u["message"]["text"]) is not None
             and u["message"]["chat"]["id"] not in self.chats
         )
-
-
-def start_all(nursery, bot):
-    nursery.start_soon(NewGameHandler(bot))

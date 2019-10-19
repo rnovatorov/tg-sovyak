@@ -10,9 +10,11 @@ def make_bot(config):
     logs.configure_triogram(config.TRIOGRAM_LOGGING_LEVEL)
     logs.configure_bot(config.BOT_LOGGING_LEVEL)
 
+    new_game_handler = handlers.NewGameHandler(bot)
+
     async def run():
         async with trio.open_nursery() as nursery:
             nursery.start_soon(bot)
-            handlers.start_all(nursery, bot)
+            nursery.start_soon(new_game_handler)
 
     return run
