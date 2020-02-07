@@ -21,7 +21,7 @@ class Game:
     score = attr.ib(factory=collections.Counter)
     logger = attr.ib(factory=lambda: logging.getLogger(__name__))
 
-    async def start(self):
+    async def run(self):
         self.logger.info("started")
 
         self.logger.info("pack name: %s", self.pack.name)
@@ -43,8 +43,6 @@ class Game:
         await self.broadcast(f"{winner}: {score}")
 
         self.logger.info("finished, winner: %s with %d", winner, score)
-
-    __call__ = start
 
     async def round(self, question, points):
         self.logger.info("round started: %d", points)

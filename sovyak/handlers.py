@@ -13,13 +13,14 @@ class NewGameHandler:
     RE_COMMAND = re.compile(r"go")
 
     bot = attr.ib()
+    config = attr.ib()
     chats = attr.ib(factory=set)
 
     async def __call__(self):
         async with trio.open_nursery() as nursery:
-            async with self.bot.sub(self.game_request) as us:
-                async for u in us:
-                    await nursery.start(self.new_game, u["message"]["chat"]["id"])
+            async with self.bot.sub(self.game_request) as updates:
+                async for update in updates:
+                    await nursery.start(self.new_game, update["message"]["chat"]["id"])
 
     async def new_game(self, chat, task_status=trio.TASK_STATUS_IGNORED):
         with self.chat_context(chat):
@@ -27,7 +28,7 @@ class NewGameHandler:
             players = await self.get_chat_members(chat)
             pack = await self.choose_pack()
             g = game.Game(bot=self.bot, players=players, pack=pack)
-            await g.start()
+            await g.run()
 
     @contextlib.contextmanager
     def chat_context(self, chat):
