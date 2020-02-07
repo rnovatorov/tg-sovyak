@@ -1,1 +1,1 @@
-from .bot import make_bot
+from .app import make_app
