@@ -39,7 +39,7 @@ class Game:
                 self.logger.info("question: %d", i)
                 await self.round(question, points=i)
 
-        (winner, score), = self.score.most_common(1)
+        ((winner, score),) = self.score.most_common(1)
         await self.broadcast(f"{winner}: {score}")
 
         self.logger.info("finished, winner: %s with %d", winner, score)
