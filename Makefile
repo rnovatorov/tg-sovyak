@@ -8,11 +8,11 @@ run:
 
 .PHONY: deps/install
 deps/install:
-	pipenv install --dev --pre
+	pipenv install --dev
 
 .PHONY: deps/update
 deps/update:
-	pipenv update --dev --pre
+	pipenv update --dev
 
 .PHONY: black/check
 black/check:
