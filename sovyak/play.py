@@ -6,6 +6,10 @@ import attr
 import trio
 
 
+def new_game(*args, **kwargs):
+    return Game(*args, **kwargs)
+
+
 @attr.s
 class Game:
 
