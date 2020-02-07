@@ -28,7 +28,7 @@ class NewGame:
     async def new_game(self, chat, task_status=trio.TASK_STATUS_IGNORED):
         with self.chat_context(chat):
             task_status.started()
-            game = play.new_game(self.bot, chat)
+            game = play.new_game(self.bot, self.config, chat)
             await game.run()
 
     @contextlib.contextmanager

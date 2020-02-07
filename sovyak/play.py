@@ -6,8 +6,8 @@ import attr
 import trio
 
 
-def new_game(*args, **kwargs):
-    return Game(*args, **kwargs)
+def new_game(bot, config, chat):
+    return Game(bot, config, [], None)
 
 
 @attr.s
@@ -18,6 +18,7 @@ class Game:
     RE_PASS = re.compile(r"-")
 
     bot = attr.ib()
+    config = attr.ib()
     players = attr.ib()
     pack = attr.ib()
 
