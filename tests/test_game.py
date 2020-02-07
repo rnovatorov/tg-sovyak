@@ -1,5 +1,6 @@
 import attr
 import trio
+import pytest
 from triogram import dispatcher as _dispatcher
 
 from bot import logs, game, models
@@ -33,6 +34,7 @@ def message_from(id_, text):
     return {"message": {"from": {"id": id_}, "text": text}}
 
 
+@pytest.mark.skip("not implemented")
 async def test_sanity():
     logs.configure_bot("DEBUG")
     bot = Bot()

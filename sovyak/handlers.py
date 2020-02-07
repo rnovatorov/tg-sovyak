@@ -38,10 +38,12 @@ class NewGameHandler:
             del self.chats[chat]
 
     async def get_chat_members(self, chat):
-        raise NotImplementedError
+        # FIXME: Hard code.
+        return self.config.CHAT_MEMBERS
 
     async def choose_pack(self):
-        raise NotImplementedError
+        # FIXME: Hard code.
+        return self.config.PACK
 
     def game_request(self, u):
         return (
