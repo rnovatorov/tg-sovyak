@@ -45,7 +45,7 @@ class Game:
 
     async def round(self, question, points):
         async with trio.open_nursery() as nursery, self.receive_messages() as messages:
-            await self.anounce_question(question, points)
+            await self.anounce_question(question)
 
             queue = collections.deque()
             timeout = await nursery.start(timer.after, self.round_duration)
@@ -99,9 +99,8 @@ class Game:
         log.info("theme info: %s", theme.info)
         await self.broadcast(theme.info)
 
-    async def anounce_question(self, question, points):
+    async def anounce_question(self, question):
         log.info("question: %s", question)
-        await self.broadcast(points)
         await self.broadcast(question.text)
 
     async def anounce_answer(self, question):
