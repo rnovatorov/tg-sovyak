@@ -7,7 +7,7 @@ class Players:
     _players = attr.ib()
 
     def __iter__(self):
-        return iter(list(self.players.values()))
+        return iter(list(self._players.values()))
 
     def __enter__(self):
         for player in self._players.values():
@@ -17,11 +17,15 @@ class Players:
     def __exit__(self, *exc):
         assert self.are_done
 
+    def __contains__(self, id):
+        return id in self._players
+
     @property
     def are_done(self):
         for player in self._players.values():
-            assert not player.can_answer
-            assert player.reviewee is None
+            if player.can_answer or player.reviewee is not None:
+                return False
+        return True
 
     def by_id(self, id):
         return self._players[id]
@@ -38,7 +42,7 @@ class Players:
 
     @classmethod
     def from_id_list(cls, ids):
-        players = {id: Player(id for id in ids)}
+        players = {id: Player(id) for id in ids}
         return cls(players)
 
 
