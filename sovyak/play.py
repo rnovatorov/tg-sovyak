@@ -1,188 +1,54 @@
-import collections
-import logging
-import re
-import enum
-
 import attr
-import trio
 
 
-def new_game(bot, config, chat):
-    players = gather_players(config)
-    pack = choose_pack(config)
-    return Game(
-        bot=bot, players=players, pack=pack, round_duration=config.ROUND_DURATION
-    )
+@attr.s
+class Players:
+
+    _players = attr.ib()
+
+    def __iter__(self):
+        return iter(list(self.players.values()))
+
+    def __enter__(self):
+        for player in self._players.values():
+            player.can_answer = True
+            player.reviewee = None
+
+    def __exit__(self, *exc):
+        assert self.are_done
+
+    @property
+    def are_done(self):
+        for player in self._players.values():
+            assert not player.can_answer
+            assert player.reviewee is None
+
+    def by_id(self, id):
+        return self._players[id]
+
+    def choose_reviewer(self, answer):
+        for player in self._players.values():
+            if (
+                not player.can_answer
+                and player.reviewee is None
+                and player is not answer.sender
+            ):
+                return player
+        return None
+
+    @classmethod
+    def from_id_list(cls, ids):
+        players = {id: Player(id for id in ids)}
+        return cls(players)
 
 
-def gather_players(config):
-    chat_members = config.CHAT_MEMBERS
-    return [Player(member_id for member_id in chat_members)]
-
-
-def choose_pack(config):
-    return config.PACK
-
-
-class PlayerState(enum.Enum):
-    pass
+Ers = Players
 
 
 @attr.s
 class Player:
 
     id = attr.ib()
-    state = attr.ib()
     score = attr.ib(default=0)
-
-
-@attr.s
-class Game:
-
-    RE_POSITIVE_REVIEW = re.compile(r"\+")
-    RE_NEGATIVE_REVIEW = re.compile(r"-")
-    RE_PASS = re.compile(r"-")
-
-    bot = attr.ib()
-    players = attr.ib()
-    pack = attr.ib()
-    round_duration = attr.ib()
-
-    logger = attr.ib(factory=lambda: logging.getLogger(__name__))
-
-    async def run(self):
-        await self.anounce_pack()
-
-        for theme in self.pack.themes:
-            self.anounce_theme(theme)
-
-            for n, question in enumerate(theme.questions, start=1):
-                self.logger.info("question: %d", n)
-                await self.round(question, points=n)
-
-        winner = self.determine_winner()
-        await self.anounce_winner(winner)
-
-    async def anounce_pack(self):
-        self.logger.info("pack name: %s", self.pack.name)
-        await self.broadcast(self.pack.name)
-
-    async def anounce_theme(self, theme):
-        self.logger.info("theme info: %s", theme.info)
-        await self.broadcast(theme.info)
-
-    async def anounce_winner(self, winner):
-        self.logger.info("winner: %s", winner)
-        await self.broadcast(f"{winner.id}: {winner.score}")
-
-    def determine_winner(self):
-        return max(self.players, key=lambda player: player.score)
-
-    async def round(self, question, points):
-        self.logger.info("round started: %d", points)
-
-        # Ask question
-        self.logger.info("question text: %s", question.text)
-        await self.broadcast(question.text)
-
-        # Start handling updates
-        async with trio.open_nursery() as nursery, self.sub() as updates:
-            reviewers = {}
-            answered = set()
-            workers = set()
-            queue = collections.deque()
-
-            # Start timer
-            timeout = await nursery.start(self.timer, self.round_duration)
-
-            # Process updates
-            self.logger.debug("start processing updates")
-
-            while not timeout.is_set() or reviewers or queue:
-                self.logger.debug("timeout: %s", timeout.is_set())
-                self.logger.debug("reviewers: %s", reviewers)
-                self.logger.debug("workers: %s", workers)
-                self.logger.debug("queue: %s", queue)
-
-                # Get next update
-                with trio.move_on_after(1) as cancel_scope:
-                    self.logger.debug("waiting for an update...")
-                    u = await updates.receive()
-                    self.logger.debug("got update: %s", u)
-
-                if cancel_scope.cancelled_caught:
-                    self.logger.debug("got nothing")
-                    u = None
-
-                if u is not None:
-                    self.logger.debug("processing update")
-                    sender, text = u["message"]["from"]["id"], u["message"]["text"]
-
-                    # Handle review
-                    if sender in reviewers:
-                        self.logger.debug("handling as review")
-
-                        mod = None
-                        if self.RE_POSITIVE_REVIEW.match(text) is not None:
-                            mod = 1
-                        elif self.RE_NEGATIVE_REVIEW.match(text) is not None:
-                            mod = -1
-
-                        if mod is not None:
-                            reviewed = reviewers.pop(sender)
-                            self.score[reviewed] += mod * points
-                            workers.add(sender)
-                            if reviewed not in reviewers:
-                                workers.add(reviewed)
-
-                    # Handle pass
-                    elif self.RE_PASS.match(text) is not None:
-                        self.logger.debug("handling as pass")
-                        workers.add(sender)
-
-                    # Handle answer
-                    elif sender not in answered and not timeout.is_set():
-                        self.logger.debug("handling as answer")
-                        queue.append((sender, text))
-                        workers.add(sender)
-                        answered.add(sender)
-
-                # Process queue
-                if queue:
-                    self.logger.debug("processing queue")
-                for _ in range(len(queue)):
-                    reviewed, text = queue.pop()
-                    for reviewer in workers - {reviewed}:
-                        reviewers[reviewer] = reviewed
-                        workers.remove(reviewer)
-                        await self.send(reviewer, f"{question.answer} {text}")
-                        break
-                    else:
-                        queue.appendleft((reviewed, text))
-
-        # Reveal answer
-        await self.broadcast(question.answer)
-
-        # Show score
-        await self.broadcast(str(self.score))
-
-    @staticmethod
-    async def timer(duration, task_status=trio.TASK_STATUS_IGNORED):
-        timeout = trio.Event()
-        task_status.started(timeout)
-        await trio.sleep(duration)
-        timeout.set()
-
-    def sub(self):
-        def new_message(u):
-            return "message" in u and u["message"]["from"]["id"] in self.players
-
-        return self.bot.sub(new_message)
-
-    async def send(self, player: str, text: str):
-        await self.bot.api.send_message(json={"chat_id": player, "text": text})
-
-    async def broadcast(self, text: str):
-        async with trio.open_nursery() as nursery:
-            for player in self.players:
-                nursery.start_soon(self.send, player, text)
+    can_answer = attr.ib(default=True)
+    reviewee = attr.ib(default=None)
