@@ -1,13 +1,39 @@
 import collections
 import logging
 import re
+import enum
 
 import attr
 import trio
 
 
 def new_game(bot, config, chat):
-    return Game(bot, config, [], None)
+    players = gather_players(config)
+    pack = choose_pack(config)
+    return Game(
+        bot=bot, players=players, pack=pack, round_duration=config.ROUND_DURATION
+    )
+
+
+def gather_players(config):
+    chat_members = config.CHAT_MEMBERS
+    return [Player(member_id for member_id in chat_members)]
+
+
+def choose_pack(config):
+    return config.PACK
+
+
+class PlayerState(enum.Enum):
+    pass
+
+
+@attr.s
+class Player:
+
+    id = attr.ib()
+    state = attr.ib()
+    score = attr.ib(default=0)
 
 
 @attr.s
@@ -18,36 +44,39 @@ class Game:
     RE_PASS = re.compile(r"-")
 
     bot = attr.ib()
-    config = attr.ib()
     players = attr.ib()
     pack = attr.ib()
+    round_duration = attr.ib()
 
-    round_duration = attr.ib(default=10)
-    score = attr.ib(factory=collections.Counter)
     logger = attr.ib(factory=lambda: logging.getLogger(__name__))
 
     async def run(self):
-        self.logger.info("started")
+        await self.anounce_pack()
 
+        for theme in self.pack.themes:
+            self.anounce_theme(theme)
+
+            for n, question in enumerate(theme.questions, start=1):
+                self.logger.info("question: %d", n)
+                await self.round(question, points=n)
+
+        winner = self.determine_winner()
+        await self.anounce_winner(winner)
+
+    async def anounce_pack(self):
         self.logger.info("pack name: %s", self.pack.name)
         await self.broadcast(self.pack.name)
 
-        if not self.score:
-            for player in self.players:
-                self.score[player] = 0
+    async def anounce_theme(self, theme):
+        self.logger.info("theme info: %s", theme.info)
+        await self.broadcast(theme.info)
 
-        for theme in self.pack.themes:
-            self.logger.info("theme info: %s", theme.info)
-            await self.broadcast(theme.info)
+    async def anounce_winner(self, winner):
+        self.logger.info("winner: %s", winner)
+        await self.broadcast(f"{winner.id}: {winner.score}")
 
-            for i, question in enumerate(theme.questions, start=1):
-                self.logger.info("question: %d", i)
-                await self.round(question, points=i)
-
-        ((winner, score),) = self.score.most_common(1)
-        await self.broadcast(f"{winner}: {score}")
-
-        self.logger.info("finished, winner: %s with %d", winner, score)
+    def determine_winner(self):
+        return max(self.players, key=lambda player: player.score)
 
     async def round(self, question, points):
         self.logger.info("round started: %d", points)
