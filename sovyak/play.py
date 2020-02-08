@@ -14,9 +14,6 @@ class Players:
             player.can_answer = True
             player.reviewee = None
 
-    def __exit__(self, *exc):
-        assert self.are_done
-
     def __contains__(self, id):
         return id in self._players
 
