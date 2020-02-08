@@ -37,7 +37,7 @@ class NewGame:
         try:
             yield
         finally:
-            del self.chats[chat]
+            self.chats.remove(chat)
 
     def game_request(self, u):
         return (
