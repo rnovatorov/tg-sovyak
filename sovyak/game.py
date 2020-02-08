@@ -72,7 +72,7 @@ class Game:
         await self.broadcast(question.answer)
         await self.broadcast(str(list(self.players)))
 
-    def process_answers(self, nursery, queue):
+    def process_answers(self, queue, nursery):
         for _ in range(len(queue)):
             question, answer = queue.pop()
             reviewer = self.players.choose_reviewer(answer)
