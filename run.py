@@ -1,6 +1,6 @@
 import trio
 
-from . import sovyak, config
+import sovyak, config
 
 
 if __name__ == "__main__":
