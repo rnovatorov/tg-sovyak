@@ -1,5 +1,6 @@
 import collections
 import logging
+import contextlib
 
 import attr
 import trio
@@ -83,12 +84,12 @@ class Game:
             reviewer.reviewee = answer.sender
             nursery.start_soon(self.send, reviewer, f"{answer.text} {question.answer}")
 
+    @contextlib.asynccontextmanager
     def receive_messages(self):
-        def new_message(u):
-            return "message" in u and u["message"]["from"]["id"] in self.players
-
-        updates = self.bot.sub(new_message)
-        return msg.Receiver(updates, self.players)
+        async with self.bot.sub(
+            lambda u: "message" in u and u["message"]["from"]["id"] in self.players
+        ) as updates:
+            yield msg.Receiver(updates, self.players)
 
     async def anounce_pack(self):
         log.info("pack name: %s", self.pack.name)
