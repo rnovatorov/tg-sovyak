@@ -4,15 +4,15 @@ import logging
 import attr
 import trio
 
-from . import timer, msg, play
+from . import timer, msg, play, pacman
 
 
 log = logging.getLogger(__name__)
 
 
-def new(bot, config, chat):
+async def new(bot, config, chat):
     players = play.Ers.from_id_list(config.CHAT_MEMBERS)
-    pack = config.PACK
+    pack = await pacman.download(config.PACK)
     return Game(
         bot=bot, players=players, pack=pack, round_duration=config.ROUND_DURATION,
     )
