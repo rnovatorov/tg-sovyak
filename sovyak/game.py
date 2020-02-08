@@ -70,7 +70,7 @@ class Game:
 
                 self.process_answers(queue, nursery)
 
-        await self.broadcast(question.answer)
+        await self.anounce_answer(question)
         await self.broadcast(str(list(self.players)))
 
     def process_answers(self, queue, nursery):
@@ -103,6 +103,9 @@ class Game:
         log.info("question: %s", question)
         await self.broadcast(points)
         await self.broadcast(question.text)
+
+    async def anounce_answer(self, question):
+        await self.broadcast(question.answer)
 
     async def anounce_winner(self, winner):
         log.info("winner: %s", winner)
