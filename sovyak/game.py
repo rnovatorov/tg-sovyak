@@ -77,6 +77,8 @@ class Game:
 
                     self.process_answers(queue, nursery)
 
+        nursery.cancel_scope.cancel()
+
         await self.anounce_answer(question)
         await self.anounce_score()
 
