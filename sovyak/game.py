@@ -70,7 +70,7 @@ class Game:
                 self.process_answers(queue, nursery)
 
         await self.broadcast(question.answer)
-        await self.broadcast(str(self.score))
+        await self.broadcast(str(list(self.players)))
 
     def process_answers(self, nursery, queue):
         for _ in range(len(queue)):
@@ -112,5 +112,5 @@ class Game:
             for player in self.players:
                 nursery.start_soon(self.send, player, text)
 
-    async def send(self, player: str, text: str):
-        await self.bot.api.send_message(json={"chat_id": player, "text": text})
+    async def send(self, player, text):
+        await self.bot.api.send_message(json={"chat_id": player.id, "text": text})
