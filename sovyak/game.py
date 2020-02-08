@@ -5,7 +5,7 @@ import contextlib
 import attr
 import trio
 
-from . import timer, msg, play, pacman
+from . import msg, play, pacman
 
 
 log = logging.getLogger(__name__)
@@ -47,28 +47,35 @@ class Game:
         async with trio.open_nursery() as nursery, self.receive_messages() as messages:
             await self.anounce_question(question)
 
+            mutex = trio.Lock()
             queue = collections.deque()
-            timeout = await nursery.start(timer.after, self.round_duration)
 
-            while not self.players.are_done:
-                message = await messages.receive()
+            async def prohibit_answers_after_timeout():
+                await trio.sleep(self.round_duration)
 
-                if isinstance(message, msg.Review):
-                    message.sender.reviewee.score += message.sign * points
-                    message.sender.reviewee = None
-
-                elif isinstance(message, msg.Pass):
-                    message.sender.can_answer = False
-
-                elif isinstance(message, msg.Answer):
-                    queue.append((question, message))
-                    message.sender.can_answer = False
-
-                if timeout.is_set():
+                async with mutex:
                     for player in self.players:
                         player.can_answer = False
 
-                self.process_answers(queue, nursery)
+            nursery.start_soon(prohibit_answers_after_timeout)
+
+            while not self.players.are_done:
+                async with mutex:
+                    message = await messages.receive(timeout=1)
+
+                    if message is not None:
+                        if isinstance(message, msg.Review):
+                            message.sender.reviewee.score += message.sign * points
+                            message.sender.reviewee = None
+
+                        elif isinstance(message, msg.Pass):
+                            message.sender.can_answer = False
+
+                        elif isinstance(message, msg.Answer):
+                            queue.append((question, message))
+                            message.sender.can_answer = False
+
+                    self.process_answers(queue, nursery)
 
         await self.anounce_answer(question)
         await self.anounce_score()

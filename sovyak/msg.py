@@ -2,6 +2,7 @@ import re
 import logging
 
 import attr
+import trio
 
 
 log = logging.getLogger(__name__)
@@ -13,10 +14,15 @@ class Receiver:
     updates = attr.ib()
     players = attr.ib()
 
-    async def receive(self):
-        log.debug("waiting for a message...")
-        update = await self.updates.receive()
-        log.debug("received a new message")
+    async def receive(self, *, timeout):
+        update = None
+        with trio.move_on_after(timeout):
+            log.debug("waiting for a message...")
+            update = await self.updates.receive()
+
+        log.debug("update: %s", update)
+        if update is None:
+            return update
 
         sender, text = self.parse(update)
         return self.classify(sender, text)
