@@ -13,7 +13,11 @@ log = logging.getLogger(__name__)
 
 async def new(bot, config, chat):
     players = play.Ers.from_id_list(config.CHAT_MEMBERS)
+
     pack = await pacman.download(config.PACK)
+    if config.PACK_SAMPLE is not None:
+        pack = pack.sample(config.PACK_SAMPLE)
+
     return Game(
         bot=bot, players=players, pack=pack, round_duration=config.ROUND_DURATION,
     )

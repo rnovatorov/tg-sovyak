@@ -1,3 +1,4 @@
+import random
 from typing import List
 
 import attr
@@ -22,3 +23,8 @@ class Pack:
 
     name: str
     themes: List[Theme] = attr.Factory(list)
+
+    def sample(self, n: int) -> "Pack":
+        name = f"{self.name} - sample {n}/{len(self.themes)}"
+        themes = random.sample(self.themes, n)
+        return Pack(name, themes)
