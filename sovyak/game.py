@@ -34,8 +34,8 @@ class Game:
             await self.anounce_theme(theme)
 
             for n, question in enumerate(theme.questions, start=1):
-                with self.players:
-                    await self.round(question, points=n)
+                self.players.reset_state()
+                await self.round(question, points=n)
 
         winner = self.determine_winner()
         await self.anounce_winner(winner)

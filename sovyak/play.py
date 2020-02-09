@@ -9,11 +9,6 @@ class Players:
     def __iter__(self):
         return iter(list(self._players.values()))
 
-    def __enter__(self):
-        for player in self._players.values():
-            player.can_answer = True
-            player.reviewee = None
-
     def __contains__(self, id):
         return id in self._players
 
@@ -23,6 +18,11 @@ class Players:
             if player.can_answer or player.reviewee is not None:
                 return False
         return True
+
+    def reset_state(self):
+        for player in self._players.values():
+            player.can_answer = True
+            player.reviewee = None
 
     def by_id(self, id):
         return self._players[id]
