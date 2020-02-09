@@ -96,7 +96,9 @@ class Game:
     @contextlib.asynccontextmanager
     async def receive_messages(self):
         async with self.bot.sub(
-            lambda u: "message" in u and u["message"]["from"]["id"] in self.players
+            lambda u: "message" in u
+            and "text" in u["message"]
+            and u["message"]["from"]["id"] in self.players
         ) as updates:
             yield msg.Receiver(updates, self.players)
 

@@ -42,6 +42,7 @@ class NewGame:
     def game_request(self, u):
         return (
             "message" in u
+            and "text" in u["message"]
             and self.RE_COMMAND.match(u["message"]["text"]) is not None
             and u["message"]["chat"]["id"] not in self.chats
         )
