@@ -2,8 +2,8 @@ import logging
 
 
 def configure(config):
-    configure_sovyak(config.LOGGING_LEVEL)
-    configure_triogram(config.TRIOGRAM_LOGGING_LEVEL)
+    configure_sovyak(config.LOG_LEVEL)
+    configure_triogram(config.TRIOGRAM_LOG_LEVEL)
 
 
 def configure_sovyak(level):
