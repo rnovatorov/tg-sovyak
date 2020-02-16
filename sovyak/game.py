@@ -95,7 +95,11 @@ class Game:
                 continue
 
             reviewer.reviewee = answer.sender
-            nursery.start_soon(self.send, reviewer, f"{answer.text} {question.answer}")
+            nursery.start_soon(self.ask_for_review, reviewer, question, answer)
+
+    async def ask_for_review(self, reviewer, question, answer):
+        text = f"Ответ игрока: {answer.text}\nПравильный {question.answer}"
+        await self.send(reviewer, text)
 
     @contextlib.asynccontextmanager
     async def receive_messages(self):
