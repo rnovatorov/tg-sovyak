@@ -51,35 +51,30 @@ class Game:
         async with trio.open_nursery() as nursery, self.receive_messages() as messages:
             await self.anounce_question(question)
 
-            mutex = trio.Lock()
             queue = collections.deque()
 
             async def prohibit_answers_after_timeout():
                 await trio.sleep(self.round_duration)
-
-                async with mutex:
-                    for player in self.players:
-                        player.can_answer = False
+                await self.players.prohibit_answers()
 
             nursery.start_soon(prohibit_answers_after_timeout)
 
-            while not self.players.are_done:
-                async with mutex:
-                    message = await messages.receive(timeout=1)
+            while not await self.players.are_done():
+                message = await messages.receive(timeout=1)
 
-                    if message is not None:
-                        if isinstance(message, msg.Review):
-                            message.sender.reviewee.score += message.sign * points
-                            message.sender.reviewee = None
+                if message is not None:
+                    if isinstance(message, msg.Review):
+                        message.sender.reviewee.score += message.sign * points
+                        message.sender.reviewee = None
 
-                        elif isinstance(message, msg.Pass):
-                            message.sender.can_answer = False
+                    elif isinstance(message, msg.Pass):
+                        message.sender.can_answer = False
 
-                        elif isinstance(message, msg.Answer):
-                            queue.append((question, message))
-                            message.sender.can_answer = False
+                    elif isinstance(message, msg.Answer):
+                        queue.append((question, message))
+                        message.sender.can_answer = False
 
-                    self.process_answers(queue, nursery)
+                self.process_answers(queue, nursery)
 
             nursery.cancel_scope.cancel()
 

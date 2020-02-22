@@ -1,10 +1,12 @@
 import attr
+import trio
 
 
 @attr.s
 class Players:
 
     _players = attr.ib()
+    _mutex = attr.ib(factory=trio.Lock)
 
     def __iter__(self):
         return iter(list(self._players.values()))
@@ -12,12 +14,12 @@ class Players:
     def __contains__(self, id):
         return id in self._players
 
-    @property
-    def are_done(self):
-        for player in self._players.values():
-            if player.can_answer or player.reviewee is not None:
-                return False
-        return True
+    async def are_done(self):
+        async with self._mutex:
+            for player in self._players.values():
+                if player.can_answer or player.reviewee is not None:
+                    return False
+            return True
 
     def reset_state(self):
         for player in self._players.values():
@@ -36,6 +38,11 @@ class Players:
             ):
                 return player
         return None
+
+    async def prohibit_answers(self):
+        async with self._mutex:
+            for player in self._players.values():
+                player.can_answer = False
 
     @classmethod
     def from_id_list(cls, ids):
