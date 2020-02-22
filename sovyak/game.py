@@ -62,17 +62,16 @@ class Game:
             while not await self.players.are_done():
                 message = await messages.receive(timeout=1)
 
-                if message is not None:
-                    if isinstance(message, msg.Review):
-                        message.sender.reviewee.score += message.sign * points
-                        message.sender.reviewee = None
+                if isinstance(message, msg.Review):
+                    message.sender.reviewee.score += message.sign * points
+                    message.sender.reviewee = None
 
-                    elif isinstance(message, msg.Pass):
-                        message.sender.can_answer = False
+                elif isinstance(message, msg.Pass):
+                    message.sender.can_answer = False
 
-                    elif isinstance(message, msg.Answer):
-                        queue.append((question, message))
-                        message.sender.can_answer = False
+                elif isinstance(message, msg.Answer):
+                    queue.append((question, message))
+                    message.sender.can_answer = False
 
                 self.process_answers(queue, nursery)
 
