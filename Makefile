@@ -17,7 +17,3 @@ deps-update:
 .PHONY: black-check
 black-check:
 	pipenv run black --check .
-
-.PHONY: test
-test:
-	pipenv run pytest --cov bot --verbose tests
