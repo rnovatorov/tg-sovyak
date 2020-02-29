@@ -1,4 +1,3 @@
-import re
 import logging
 
 import attr
@@ -64,17 +63,17 @@ class Message:
 @attr.s
 class Review(Message):
 
-    RE_POSITIVE = re.compile(r"\+")
-    RE_NEGATIVE = re.compile(r"-")
+    POSITIVE = "+"
+    NEGATIVE = "-"
 
     sign = attr.ib()
 
     @classmethod
     def parse(cls, sender, text):
-        if cls.RE_POSITIVE.match(text) is not None:
+        if text.strip() == cls.POSITIVE:
             return cls(sender, text, sign=1)
 
-        if cls.RE_NEGATIVE.match(text) is not None:
+        if text.strip() == cls.NEGATIVE:
             return cls(sender, text, sign=-1)
 
         raise TypeError("not a Review")
@@ -86,11 +85,11 @@ class Spam(Message):
 
 class Pass(Message):
 
-    RE = re.compile(r"-")
+    PATTERN = "-"
 
     @classmethod
     def parse(cls, sender, text):
-        if cls.RE.match(text) is not None:
+        if text.strip() == cls.PATTERN:
             return cls(sender, text)
 
         raise TypeError("not a Pass")

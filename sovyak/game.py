@@ -93,7 +93,12 @@ class Game:
 
     async def ask_for_review(self, reviewer, question, answer):
         text = f"Ответ игрока: {answer.text}\nПравильный {question.answer}"
-        await self.send(reviewer, text)
+        reply_markup = {
+            "keyboard": [[msg.Review.POSITIVE, msg.Review.NEGATIVE]],
+            "one_time_keyboard": True,
+            "resize_keyboard": True,
+        }
+        await self.send(reviewer, text, reply_markup=reply_markup)
 
     @contextlib.asynccontextmanager
     async def receive_messages(self):
@@ -113,8 +118,13 @@ class Game:
         await self.broadcast(theme.info)
 
     async def anounce_question(self, question):
+        reply_markup = {
+            "keyboard": [[msg.Pass.PATTERN]],
+            "one_time_keyboard": True,
+            "resize_keyboard": True,
+        }
         log.info("question: %s", question)
-        await self.broadcast(question.text)
+        await self.broadcast(question.text, reply_markup=reply_markup)
 
     async def anounce_answer(self, question):
         await self.broadcast(question.answer)
@@ -125,12 +135,15 @@ class Game:
 
     async def anounce_winner(self, winner):
         log.info("winner: %s", winner)
-        await self.broadcast(f"{winner.id}: {winner.score}")
+        reply_markup = {"remove_keyboard": True}
+        await self.broadcast(f"{winner.id}: {winner.score}", reply_markup=reply_markup)
 
-    async def broadcast(self, text: str):
+    async def broadcast(self, text, **kwargs):
         async with trio.open_nursery() as nursery:
             for player in self.players:
-                nursery.start_soon(self.send, player, text)
+                nursery.start_soon(lambda: self.send(player, text, **kwargs))
 
-    async def send(self, player, text):
-        await self.bot.api.send_message(json={"chat_id": player.id, "text": text})
+    async def send(self, player, text, **kwargs):
+        await self.bot.api.send_message(
+            json={"chat_id": player.id, "text": text, **kwargs}
+        )
