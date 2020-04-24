@@ -5,14 +5,18 @@ import contextlib
 import attr
 import trio
 
-from . import msg, play, pacman
+from sovyak import pacman
+
+from .receiver import Receiver
+from .messages import Review, Pass, Answer
+from .players import Players
 
 
 log = logging.getLogger(__name__)
 
 
 async def new(bot, config, chat):
-    players = play.Ers.from_id_list(config.CHAT_MEMBERS)
+    players = Players.from_id_list(config.CHAT_MEMBERS)
 
     pack = await pacman.download(config.PACK)
     if config.PACK_SAMPLE is not None:
@@ -62,14 +66,14 @@ class Game:
             while not await self.players.are_done():
                 message = await messages.receive(timeout=1)
 
-                if isinstance(message, msg.Review):
+                if isinstance(message, Review):
                     message.sender.reviewee.score += message.sign * points
                     message.sender.reviewee = None
 
-                elif isinstance(message, msg.Pass):
+                elif isinstance(message, Pass):
                     message.sender.can_answer = False
 
-                elif isinstance(message, msg.Answer):
+                elif isinstance(message, Answer):
                     queue.append((question, message))
                     message.sender.can_answer = False
 
@@ -94,7 +98,7 @@ class Game:
     async def ask_for_review(self, reviewer, question, answer):
         text = f"Ответ игрока: {answer.text}\nПравильный {question.answer}"
         reply_markup = {
-            "keyboard": [[msg.Review.POSITIVE, msg.Review.NEGATIVE]],
+            "keyboard": [[Review.POSITIVE, Review.NEGATIVE]],
             "one_time_keyboard": True,
             "resize_keyboard": True,
         }
@@ -107,7 +111,7 @@ class Game:
             and "text" in u["message"]
             and u["message"]["from"]["id"] in self.players
         ) as updates:
-            yield msg.Receiver(updates, self.players)
+            yield Receiver(updates, self.players)
 
     async def anounce_pack(self):
         log.info("pack name: %s", self.pack.name)
@@ -119,7 +123,7 @@ class Game:
 
     async def anounce_question(self, question):
         reply_markup = {
-            "keyboard": [[msg.Pass.PATTERN]],
+            "keyboard": [[Pass.PATTERN]],
             "one_time_keyboard": True,
             "resize_keyboard": True,
         }

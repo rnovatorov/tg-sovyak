@@ -50,9 +50,6 @@ class Players:
         return cls(players)
 
 
-Ers = Players
-
-
 @attr.s
 class Player:
 
