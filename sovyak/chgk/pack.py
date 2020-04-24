@@ -3,19 +3,7 @@ from typing import List
 
 import attr
 
-
-@attr.s(auto_attribs=True)
-class Question:
-
-    text: str
-    answer: str
-
-
-@attr.s(auto_attribs=True)
-class Theme:
-
-    info: str
-    questions: List[Question] = attr.Factory(list)
+from .theme import Theme
 
 
 @attr.s(auto_attribs=True)
