@@ -15,6 +15,7 @@ black = "*"
 pytest = "*"
 pytest-trio = "*"
 pytest-cov = "*"
+pyflakes = "*"
 
 [requires]
 python_version = "3.8"

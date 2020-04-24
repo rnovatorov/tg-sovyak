@@ -17,3 +17,10 @@ deps-update:
 .PHONY: black-check
 black-check:
 	pipenv run black --check .
+
+.PHONY: pyflakes-check
+pyflakes-check:
+	pipenv run pyflakes .
+
+.PHONY: check
+check: black-check pyflakes-check
