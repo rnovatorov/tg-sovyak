@@ -5,7 +5,7 @@ from .logging import configure_logging
 from .new_game_handler import NewGameHandler
 
 
-def make_app(config):
+def make(config):
     bot = triogram.make_bot(config.TOKEN)
     configure_logging(config)
     new_game_handler = NewGameHandler(bot, config)

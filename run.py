@@ -1,8 +1,5 @@
-import trio
-
-import sovyak, config
+import sovyak
 
 
 if __name__ == "__main__":
-    app = sovyak.make_app(config)
-    trio.run(app)
+    sovyak.main()

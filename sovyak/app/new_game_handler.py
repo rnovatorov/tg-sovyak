@@ -4,7 +4,7 @@ import contextlib
 import attr
 import trio
 
-from . import game
+from sovyak import game
 
 
 @attr.s
