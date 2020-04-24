@@ -4,7 +4,7 @@ import asks
 import bs4
 import more_itertools as mit
 
-from . import chgk
+from sovyak import chgk
 
 
 DB_URL = "https://db.chgk.info/tour"
