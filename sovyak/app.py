@@ -3,13 +3,13 @@ import logging
 import trio
 import triogram
 
-from . import handlers
+from .new_game_handler import NewGameHandler
 
 
 def make_app(config):
     bot = triogram.make_bot(config.TOKEN)
     configure_logging(config)
-    new_game_handler = handlers.NewGame(bot, config)
+    new_game_handler = NewGameHandler(bot, config)
 
     async def app():
         async with trio.open_nursery() as nursery:

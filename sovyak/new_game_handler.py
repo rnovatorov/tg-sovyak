@@ -8,7 +8,7 @@ from . import game
 
 
 @attr.s
-class NewGame:
+class NewGameHandler:
 
     RE_COMMAND = re.compile(r"go")
 
