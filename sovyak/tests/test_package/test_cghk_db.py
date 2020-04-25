@@ -1,3 +1,5 @@
+import gzip
+
 import pytest
 
 from sovyak import package
@@ -9,7 +11,7 @@ PACK_NAME = "russv07.6"
 class TestChgkDB:
     @pytest.fixture(scope="class")
     def pack(self, resources):
-        with open(resources / f"{PACK_NAME}.html") as markup:
+        with gzip.open(resources / f"{PACK_NAME}.html.gzip") as markup:
             yield package.chgk_db.parse(PACK_NAME, markup)
 
     def test_pack_name(self, pack):
