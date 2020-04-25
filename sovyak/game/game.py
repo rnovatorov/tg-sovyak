@@ -14,7 +14,11 @@ from .players import Players
 async def new(bot, config, chat):
     players = Players.from_id_list(config.CHAT_MEMBERS)
 
-    pack = await package.chgk_db.download(config.PACK)
+    try:
+        pack = await package.chgk_db.download(config.PACK)
+    except:
+        pack = package.siq.load(config.PACK)
+
     if config.PACK_SAMPLE is not None:
         pack = pack.sample(config.PACK_SAMPLE)
 
@@ -118,7 +122,7 @@ class Game:
         await self.broadcast(text)
 
     async def announce_question(self, question):
-        text = f"Вопрос: {question.text}"
+        text = question.text
         reply_markup = {
             "keyboard": [[Pass.PATTERN]],
             "one_time_keyboard": True,
@@ -131,9 +135,7 @@ class Game:
         await self.broadcast(text)
 
     async def announce_score(self):
-        text = "Счёт:\n" + "\n".join(
-            f"- {player.id}: {player.score}" for player in self.players
-        )
+        text = "\n".join(f"{player.id}: {player.score}" for player in self.players)
         await self.broadcast(text)
 
     async def announce_winner(self, winner):
