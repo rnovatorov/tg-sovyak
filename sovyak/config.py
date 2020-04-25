@@ -3,8 +3,7 @@ import os
 
 TOKEN = os.environ["TOKEN"]
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-TRIOGRAM_LOG_LEVEL = os.getenv("TRIOGRAM_LOG_LEVEL", "WARNING")
+TRIOGRAM_LOG_LEVEL = os.getenv("TRIOGRAM_LOG_LEVEL", "INFO")
 
 ROUND_DURATION = int(os.getenv("ROUND_DURATION", 30))
 CHAT_MEMBERS = list(map(int, os.environ["CHAT_MEMBERS"].split(",")))

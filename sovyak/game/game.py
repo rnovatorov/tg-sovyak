@@ -1,5 +1,4 @@
 import collections
-import logging
 import contextlib
 
 import attr
@@ -10,9 +9,6 @@ from sovyak import package
 from .receiver import Receiver
 from .messages import Review, Pass, Answer
 from .players import Players
-
-
-log = logging.getLogger(__name__)
 
 
 async def new(bot, config, chat):
@@ -114,33 +110,36 @@ class Game:
             yield Receiver(updates, self.players)
 
     async def announce_pack(self):
-        log.info("pack name: %s", self.pack.name)
-        await self.broadcast(self.pack.name)
+        text = f"Пакет: {self.pack.name}"
+        await self.broadcast(text)
 
     async def announce_theme(self, theme):
-        log.info("theme info: %s", theme.info)
-        await self.broadcast(theme.info)
+        text = f"Тема: {theme.info}"
+        await self.broadcast(text)
 
     async def announce_question(self, question):
+        text = f"Вопрос: {question.text}"
         reply_markup = {
             "keyboard": [[Pass.PATTERN]],
             "one_time_keyboard": True,
             "resize_keyboard": True,
         }
-        log.info("question: %s", question)
-        await self.broadcast(question.text, reply_markup=reply_markup)
+        await self.broadcast(text, reply_markup=reply_markup)
 
     async def announce_answer(self, question):
-        await self.broadcast(question.answer)
+        text = f"Ответ: {question.answer}"
+        await self.broadcast(text)
 
     async def announce_score(self):
-        text = "\n".join(f"{player.id}: {player.score}" for player in self.players)
+        text = "Счёт:\n" + "\n".join(
+            f"- {player.id}: {player.score}" for player in self.players
+        )
         await self.broadcast(text)
 
     async def announce_winner(self, winner):
-        log.info("winner: %s", winner)
+        text = f"Победил {winner.id} со счётом {winner.score}"
         reply_markup = {"remove_keyboard": True}
-        await self.broadcast(f"{winner.id}: {winner.score}", reply_markup=reply_markup)
+        await self.broadcast(text, reply_markup=reply_markup)
 
     async def broadcast(self, text, **kwargs):
         async with trio.open_nursery() as nursery:
