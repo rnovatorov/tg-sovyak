@@ -10,8 +10,6 @@ from .theme import Theme
 
 
 DB_URL = "https://db.chgk.info/tour"
-THEME_SIZE = 5
-RE_INFO = re.compile(r"[\w\-,]+")
 
 
 async def download(name):
@@ -30,6 +28,10 @@ def parse_package(name, soup):
     return Pack(name=name, themes=themes)
 
 
+RE_INFO = re.compile(r"[\w\-,]+")
+THEME_SIZE = 5
+
+
 def parse_theme(div):
     info = " ".join(RE_INFO.findall(div.contents[1]))
     if not info:
@@ -42,13 +44,19 @@ def parse_theme(div):
     return Theme(info=info, questions=questions)
 
 
-def parse_question(q, a):
-    text = q.text.strip()
-    if not text:
-        raise ValueError(f"question with no text: {q}")
+RE_QUESTION = re.compile(r"^\d+\. (.+?)\.?$")
+RE_ANSWER = re.compile(r"^Ответ: (.+?)\.?$")
 
-    answer = a.text.strip()
-    if not answer:
-        raise ValueError(f"question with no answer: {a}")
+
+def parse_question(q, a):
+    text_match = RE_QUESTION.match(q.text.strip().replace("\n", " "))
+    if text_match is None:
+        raise ValueError(f"cannot match question: {q}")
+    (text,) = text_match.groups()
+
+    answer_match = RE_ANSWER.match(a.text.strip().replace("\n", " "))
+    if answer_match is None:
+        raise ValueError(f"cannot match answer: {a}")
+    (answer,) = answer_match.groups()
 
     return Question(text=text, answer=answer)
