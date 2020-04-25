@@ -1,8 +1,16 @@
+import zipfile
+
 import bs4
 
 from .pack import Pack
 from .question import Question
 from .theme import Theme
+
+
+def load(file):
+    with zipfile.ZipFile(file) as archive:
+        with archive.open("content.xml") as siq:
+            return parse(siq)
 
 
 def parse(markup):
