@@ -36,24 +36,24 @@ class Game:
     round_duration = attr.ib()
 
     async def run(self):
-        await self.anounce_pack()
+        await self.announce_pack()
 
         for theme in self.pack.themes:
-            await self.anounce_theme(theme)
+            await self.announce_theme(theme)
 
             for n, question in enumerate(theme.questions, start=1):
                 self.players.reset_state()
                 await self.round(question, points=n)
 
         winner = self.determine_winner()
-        await self.anounce_winner(winner)
+        await self.announce_winner(winner)
 
     def determine_winner(self):
         return max(self.players, key=lambda player: player.score)
 
     async def round(self, question, points):
         async with trio.open_nursery() as nursery, self.receive_messages() as messages:
-            await self.anounce_question(question)
+            await self.announce_question(question)
 
             queue = collections.deque()
 
@@ -81,8 +81,8 @@ class Game:
 
             nursery.cancel_scope.cancel()
 
-        await self.anounce_answer(question)
-        await self.anounce_score()
+        await self.announce_answer(question)
+        await self.announce_score()
 
     def process_answers(self, queue, nursery):
         for _ in range(len(queue)):
@@ -113,15 +113,15 @@ class Game:
         ) as updates:
             yield Receiver(updates, self.players)
 
-    async def anounce_pack(self):
+    async def announce_pack(self):
         log.info("pack name: %s", self.pack.name)
         await self.broadcast(self.pack.name)
 
-    async def anounce_theme(self, theme):
+    async def announce_theme(self, theme):
         log.info("theme info: %s", theme.info)
         await self.broadcast(theme.info)
 
-    async def anounce_question(self, question):
+    async def announce_question(self, question):
         reply_markup = {
             "keyboard": [[Pass.PATTERN]],
             "one_time_keyboard": True,
@@ -130,14 +130,14 @@ class Game:
         log.info("question: %s", question)
         await self.broadcast(question.text, reply_markup=reply_markup)
 
-    async def anounce_answer(self, question):
+    async def announce_answer(self, question):
         await self.broadcast(question.answer)
 
-    async def anounce_score(self):
+    async def announce_score(self):
         text = "\n".join(f"{player.id}: {player.score}" for player in self.players)
         await self.broadcast(text)
 
-    async def anounce_winner(self, winner):
+    async def announce_winner(self, winner):
         log.info("winner: %s", winner)
         reply_markup = {"remove_keyboard": True}
         await self.broadcast(f"{winner.id}: {winner.score}", reply_markup=reply_markup)
