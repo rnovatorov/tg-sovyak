@@ -15,26 +15,40 @@ RE_INFO = re.compile(r"[\w\-,]+")
 
 
 async def download(name):
-    pack = Pack(name=name)
-
     url = f"{DB_URL}/{name}/print"
     response = await asks.get(url)
     soup = bs4.BeautifulSoup(response.text, "lxml")
+    return parse_package(name, soup)
 
-    for div in soup.find_all("div", style="margin-top:20px;"):
-        info = " ".join(RE_INFO.findall(div.contents[1]))
-        theme = Theme(info=info)
 
-        ps = div.find_all("p")
-        qa = mit.take(THEME_SIZE, mit.chunked(ps, 2))
+def parse_package(name, soup):
+    divs = soup.find_all("div", style="margin-top:20px;")
+    if not divs:
+        raise ValueError(f"no themes found: {soup}")
 
-        for q, a in qa:
-            question = Question(text=q.text, answer=a.text)
-            theme.questions.append(question)
+    themes = [parse_theme(div) for div in divs]
+    return Pack(name=name, themes=themes)
 
-        pack.themes.append(theme)
 
-    if not pack.themes:
-        raise ValueError("Themes not found")
+def parse_theme(div):
+    info = " ".join(RE_INFO.findall(div.contents[1]))
+    if not info:
+        raise ValueError(f"theme with no info: {div}")
 
-    return pack
+    ps = div.find_all("p")
+    qas = mit.take(THEME_SIZE, mit.chunked(ps, 2))
+
+    questions = [parse_question(q, a) for q, a in qas]
+    return Theme(info=info, questions=questions)
+
+
+def parse_question(q, a):
+    text = q.text.strip()
+    if not text:
+        raise ValueError(f"question with no text: {q}")
+
+    answer = a.text.strip()
+    if not answer:
+        raise ValueError(f"question with no answer: {a}")
+
+    return Question(text=text, answer=answer)
