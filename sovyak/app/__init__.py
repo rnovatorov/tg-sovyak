@@ -1,3 +1,3 @@
-from .app import make
+from .app import new
 
-__all__ = ["make"]
+__all__ = ["new"]
