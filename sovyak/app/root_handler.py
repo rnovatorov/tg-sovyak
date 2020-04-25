@@ -8,7 +8,7 @@ from sovyak import game
 
 
 @attr.s
-class NewGameHandler:
+class RootHandler:
 
     RE_COMMAND = re.compile(r"go")
 
