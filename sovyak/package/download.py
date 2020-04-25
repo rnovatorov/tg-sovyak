@@ -4,7 +4,9 @@ import asks
 import bs4
 import more_itertools as mit
 
-from sovyak import chgk
+from .pack import Pack
+from .question import Question
+from .theme import Theme
 
 
 DB_URL = "https://db.chgk.info/tour"
@@ -13,7 +15,7 @@ RE_INFO = re.compile(r"[\w\-,]+")
 
 
 async def download(name):
-    pack = chgk.Pack(name=name)
+    pack = Pack(name=name)
 
     url = f"{DB_URL}/{name}/print"
     response = await asks.get(url)
@@ -21,13 +23,13 @@ async def download(name):
 
     for div in soup.find_all("div", style="margin-top:20px;"):
         info = " ".join(RE_INFO.findall(div.contents[1]))
-        theme = chgk.Theme(info=info)
+        theme = Theme(info=info)
 
         ps = div.find_all("p")
         qa = mit.take(THEME_SIZE, mit.chunked(ps, 2))
 
         for q, a in qa:
-            question = chgk.Question(text=q.text, answer=a.text)
+            question = Question(text=q.text, answer=a.text)
             theme.questions.append(question)
 
         pack.themes.append(theme)

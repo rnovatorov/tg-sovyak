@@ -5,7 +5,7 @@ import contextlib
 import attr
 import trio
 
-from sovyak import pacman
+from sovyak import package
 
 from .receiver import Receiver
 from .messages import Review, Pass, Answer
@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 async def new(bot, config, chat):
     players = Players.from_id_list(config.CHAT_MEMBERS)
 
-    pack = await pacman.download(config.PACK)
+    pack = await package.download(config.PACK)
     if config.PACK_SAMPLE is not None:
         pack = pack.sample(config.PACK_SAMPLE)
 
