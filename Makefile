@@ -24,3 +24,7 @@ pyflakes-check:
 
 .PHONY: check
 check: black-check pyflakes-check
+
+.PHONY: test
+test:
+	pipenv run pytest --verbose --cov sovyak --cov-report term-missing

@@ -5,7 +5,7 @@ from .question import Question
 from .theme import Theme
 
 
-def parse_siq(markup):
+def parse(markup):
     soup = bs4.BeautifulSoup(markup, "lxml")
 
     package_tag = soup.find("package")

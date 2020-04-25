@@ -9,17 +9,15 @@ from .question import Question
 from .theme import Theme
 
 
-DB_URL = "https://db.chgk.info/tour"
-
-
-async def download(name):
-    url = f"{DB_URL}/{name}/print"
+async def download(name, base_url="https://db.chgk.info"):
+    url = f"{base_url}/tour/{name}/print"
     response = await asks.get(url)
-    soup = bs4.BeautifulSoup(response.text, "lxml")
-    return parse_package(name, soup)
+    return parse(name, response.text)
 
 
-def parse_package(name, soup):
+def parse(name, markup):
+    soup = bs4.BeautifulSoup(markup, "lxml")
+
     divs = soup.find_all("div", style="margin-top:20px;")
     if not divs:
         raise ValueError(f"no themes found: {soup}")
@@ -44,8 +42,8 @@ def parse_theme(div):
     return Theme(info=info, questions=questions)
 
 
-RE_QUESTION = re.compile(r"^\d+\. (.+?)\.?$")
-RE_ANSWER = re.compile(r"^Ответ: (.+?)\.?$")
+RE_QUESTION = re.compile(r"^\d+\. (.+?)$")
+RE_ANSWER = re.compile(r"^Ответ: (.+?)$")
 
 
 def parse_question(q, a):
