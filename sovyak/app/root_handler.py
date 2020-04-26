@@ -4,7 +4,7 @@ import contextlib
 import attr
 import trio
 
-from sovyak import game
+from sovyak import gameplay
 
 
 @attr.s
@@ -28,8 +28,8 @@ class RootHandler:
     async def new_game(self, chat, task_status=trio.TASK_STATUS_IGNORED):
         with self.chat_context(chat):
             task_status.started()
-            sovyak = await game.new(self.bot, self.config, chat)
-            await sovyak.run()
+            game = await gameplay.new_game(self.bot, self.config, chat)
+            await game.run()
 
     @contextlib.contextmanager
     def chat_context(self, chat):

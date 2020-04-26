@@ -11,7 +11,7 @@ from .messages import Review, Pass, Answer
 from .players import Players
 
 
-async def new(bot, config, chat):
+async def new_game(bot, config, chat):
     players = Players.from_id_list(config.CHAT_MEMBERS)
 
     try:
