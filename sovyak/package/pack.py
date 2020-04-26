@@ -13,7 +13,7 @@ class Pack:
     themes: List[Theme] = attr.Factory(list)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.name!r}, themes={self.themes!r})"
+        return f"{type(self).__name__}({self.name!r})"
 
     def __len__(self):
         return len(self.themes)
