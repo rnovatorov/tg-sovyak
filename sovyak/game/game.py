@@ -15,9 +15,9 @@ async def new(bot, config, chat):
     players = Players.from_id_list(config.CHAT_MEMBERS)
 
     try:
-        pack = await package.chgk_db.download(config.PACK)
-    except:
         pack = package.siq.load(config.PACK)
+    except:
+        pack = await package.chgk_db.download(config.PACK)
 
     if config.PACK_SAMPLE is not None:
         pack = pack.sample(config.PACK_SAMPLE)
@@ -53,7 +53,7 @@ class Game:
 
     async def round(self, question, points):
         async with trio.open_nursery() as nursery, self.receive_messages() as messages:
-            await self.announce_question(question)
+            await self.announce_question(question, points)
 
             queue = collections.deque()
 
@@ -96,7 +96,7 @@ class Game:
             nursery.start_soon(self.ask_for_review, reviewer, question, answer)
 
     async def ask_for_review(self, reviewer, question, answer):
-        text = f"Ответ игрока: {answer.text}\nПравильный {question.answer}"
+        text = f"Ответ игрока: {answer.text}\nПравильный ответ: {question.answer}"
         reply_markup = {
             "keyboard": [[Review.POSITIVE, Review.NEGATIVE]],
             "one_time_keyboard": True,
@@ -118,11 +118,11 @@ class Game:
         await self.broadcast(text)
 
     async def announce_theme(self, theme):
-        text = f"Тема: {theme.info}"
+        text = f"[{theme.info}]"
         await self.broadcast(text)
 
-    async def announce_question(self, question):
-        text = question.text
+    async def announce_question(self, question, points):
+        text = f"{points}. {question.text}"
         reply_markup = {
             "keyboard": [[Pass.PATTERN]],
             "one_time_keyboard": True,

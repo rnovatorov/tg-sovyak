@@ -6,11 +6,14 @@ import attr
 from .theme import Theme
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, repr=False)
 class Pack:
 
     name: str
     themes: List[Theme] = attr.Factory(list)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.name!r}, themes={self.themes!r})"
 
     def __len__(self):
         return len(self.themes)
