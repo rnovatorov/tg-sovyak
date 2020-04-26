@@ -88,7 +88,7 @@ def parse_question_type(tag):
         if name == "theme":
             return value
 
-    raise ValueError(f"question of cat type without theme: {tag}")
+    return None
 
 
 def parse_question_type_param(tag):
@@ -97,10 +97,7 @@ def parse_question_type_param(tag):
     except KeyError:
         raise ValueError(f"question type param with no name: {tag}")
 
-    value = tag.get_text().strip()
-    if not value:
-        raise ValueError(f"question type param with no value: {tag}")
-
+    value = tag.get_text().strip() or None
     return name, value
 
 
