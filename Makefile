@@ -4,7 +4,7 @@ default:
 
 .PHONY: run
 run:
-	pipenv run python run.py
+	pipenv run python main.py
 
 .PHONY: deps-install
 deps-install:

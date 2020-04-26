@@ -1,3 +1,3 @@
-from .main import main
+from . import app, config
 
-__all__ = ["main"]
+__all__ = ["app", "config"]
