@@ -1,4 +1,5 @@
 import zipfile
+from typing import Tuple, Optional
 
 import bs4
 
@@ -7,13 +8,13 @@ from .question import Question
 from .theme import Theme
 
 
-def load(file):
+def load(file) -> Pack:
     with zipfile.ZipFile(file) as archive:
         with archive.open("content.xml") as siq:
             return parse(siq)
 
 
-def parse(markup):
+def parse(markup) -> Pack:
     soup = bs4.BeautifulSoup(markup, "lxml-xml")
 
     package_tag = soup.find("package")
@@ -23,7 +24,7 @@ def parse(markup):
     return parse_package(package_tag)
 
 
-def parse_package(tag):
+def parse_package(tag) -> Pack:
     try:
         name = tag["name"]
     except KeyError:
@@ -37,7 +38,7 @@ def parse_package(tag):
     return Pack(name=name, themes=themes)
 
 
-def parse_theme(tag):
+def parse_theme(tag) -> Theme:
     try:
         name = tag["name"]
     except KeyError:
@@ -51,7 +52,7 @@ def parse_theme(tag):
     return Theme(info=name, questions=questions)
 
 
-def parse_question(tag, theme_name):
+def parse_question(tag, theme_name) -> Question:
     scenario_tag = tag.find("scenario")
     if scenario_tag is None:
         raise ValueError(f"question with no scenario: {tag}")
@@ -71,7 +72,7 @@ def parse_question(tag, theme_name):
     return Question(text=text, answer=answer)
 
 
-def parse_question_type(tag):
+def parse_question_type(tag) -> Optional[str]:
     if tag is None:
         return None
 
@@ -91,7 +92,7 @@ def parse_question_type(tag):
     return None
 
 
-def parse_question_type_param(tag):
+def parse_question_type_param(tag) -> Tuple[str, Optional[str]]:
     try:
         name = tag["name"]
     except KeyError:
@@ -101,7 +102,7 @@ def parse_question_type_param(tag):
     return name, value
 
 
-def parse_scenario(tag):
+def parse_scenario(tag) -> str:
     text = tag.get_text().strip()
     if not text:
         raise ValueError(f"scenario with no text: {tag}")
@@ -109,7 +110,7 @@ def parse_scenario(tag):
     return text
 
 
-def parse_answer(tag):
+def parse_answer(tag) -> str:
     text = tag.get_text().strip()
     if not text:
         raise ValueError(f"answer with no text: {tag}")
