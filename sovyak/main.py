@@ -1,7 +1,8 @@
 import trio
 
-from sovyak import app, config
+from sovyak import application, config
 
 
 def main():
-    trio.run(app.new(config))
+    app = application.new(config)
+    trio.run(app)
