@@ -7,7 +7,7 @@ from .root_handler import RootHandler
 
 
 def new(config):
-    bot = triogram.make_bot(config.TOKEN)
+    bot = triogram.make_bot()
     configure_logging(config)
     root_handler = RootHandler(bot, config)
     return App(bot, root_handler)

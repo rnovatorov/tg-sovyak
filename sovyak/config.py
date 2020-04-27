@@ -1,8 +1,6 @@
 import os
 
 
-TOKEN = os.environ["TOKEN"]
-
 TRIOGRAM_LOG_LEVEL = os.getenv("TRIOGRAM_LOG_LEVEL", "INFO")
 
 ROUND_DURATION = int(os.getenv("ROUND_DURATION", 30))
