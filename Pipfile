@@ -5,7 +5,7 @@ verify_ssl = true
 
 [packages]
 trio = "*"
-triogram = "==0.4.0"
+triogram = "==0.5.*"
 beautifulsoup4 = "*"
 lxml = "*"
 more-itertools = "*"
